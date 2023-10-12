@@ -1,0 +1,1 @@
+install(FILES Vend_Ax.hex Vend_Ax_Eeprom.hex DESTINATION share/fxload)

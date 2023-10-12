@@ -51,22 +51,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(USB1 REQUIRED)
 
-# Build executable
+# CLI11 is a header only library
+add_library(CLI11 INTERFACE)
+target_include_directories(CLI11 INTERFACE CLI11/include)
+
+# Add subdirs
 # ----------------------------------------------------------
-set(FXLOAD_SOURCES
-    ezusb.h
-	ezusb.c
-	main.cpp
-	usb.h
-	fxload-version.h
-	${CMAKE_CURRENT_BINARY_DIR}/fxload-version.cpp)
-
-# Set up version file
-configure_file(fxload-version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/fxload-version.cpp)
-
-add_executable(fxload ${FXLOAD_SOURCES})
-target_link_libraries(fxload libusb1::libusb1)
-target_include_directories(fxload PRIVATE .)
-
-# pick up CLI11 header only library
-target_include_directories(fxload PRIVATE CLI11/include)
+add_subdirectory(src)
+add_subdirectory(resources)

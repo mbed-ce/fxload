@@ -22,16 +22,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdarg.h>
-
-#include <ctype.h>
-#include <string.h>
 
 #include "CLI/CLI.hpp"
 
 #include "libusb.h"
 #include "ezusb.h"
 #include "fxload-version.h"
+#include "ApplicationPaths.h"
 
 struct device_spec { int index; uint16_t vid, pid; int bus, port; };
 
@@ -68,6 +65,11 @@ struct device_spec { int index; uint16_t vid, pid; int bus, port; };
 //    exit(1);
 //}
 
+/*
+ * Finds the correct USB device to open based on the provided device spec.
+ * If wanted is nullptr, all USB devices are printed to the console and the user
+ * can select which to use.
+ */
 libusb_device_handle *get_usb_device(struct device_spec *wanted) {
     libusb_device **list;
     libusb_device_handle *dev_h = NULL;
@@ -77,7 +79,8 @@ libusb_device_handle *get_usb_device(struct device_spec *wanted) {
 
     libusb_device *found = NULL;
     int nr_found = 0;
-    int interactive = (wanted->vid == 0 && wanted->bus == 0);
+
+    bool search_all = wanted == nullptr;
     
     ssize_t nr = libusb_get_device_list(NULL, &list);
     for (int i = 0; i < nr; i++) {
@@ -91,35 +94,66 @@ libusb_device_handle *get_usb_device(struct device_spec *wanted) {
         uint8_t   bus = libusb_get_bus_number(dev);
         uint8_t  port = libusb_get_port_number(dev);
 
-        if ((bus == wanted->bus && (port == wanted->port || wanted->port == 0)) ||
-            (vid == wanted->vid && ( pid == wanted->pid  || wanted->pid  == 0))) {
-            if (nr_found++ == wanted->index) {
-                found = dev;
-                break;
+        if(!search_all)
+        {
+            if ((bus == wanted->bus && (port == wanted->port || wanted->port == 0)) ||
+                (vid == wanted->vid && ( pid == wanted->pid  || wanted->pid  == 0))) {
+                if (nr_found++ == wanted->index) {
+                    found = dev;
+                    break;
+                }
             }
         }
 
-        if (interactive) {
-            unsigned char mfg[80] = {0}, prd[80] = {0}, ser[80] = {0};
+
+        if (search_all) {
             libusb_device_handle *dh;
 
+            std::string deviceDetailsString = "";
+
             if (libusb_open(dev, &dh) == LIBUSB_SUCCESS) {
-                libusb_get_string_descriptor_ascii(dh, desc.iManufacturer, mfg, sizeof(mfg));
-                libusb_get_string_descriptor_ascii(dh, desc.iProduct     , prd, sizeof(prd));
-                libusb_get_string_descriptor_ascii(dh, desc.iSerialNumber, ser, sizeof(ser));
+
+                // Query as many details about the device are available
+                unsigned char detailsBuffer[255];
+                if(libusb_get_string_descriptor_ascii(dh, desc.iManufacturer, detailsBuffer, sizeof(detailsBuffer)) > 0)
+                {
+                    deviceDetailsString += " Mfgr: " + std::string(reinterpret_cast<char const *>(detailsBuffer));
+                }
+                if(libusb_get_string_descriptor_ascii(dh, desc.iProduct, detailsBuffer, sizeof(detailsBuffer)) > 0)
+                {
+                    deviceDetailsString += " Product: " + std::string(reinterpret_cast<char const *>(detailsBuffer));
+                }
+                if(libusb_get_string_descriptor_ascii(dh, desc.iSerialNumber, detailsBuffer, sizeof(detailsBuffer)) > 0)
+                {
+                    deviceDetailsString += " S/N: " + std::string(reinterpret_cast<char const *>(detailsBuffer));
+                }
                 libusb_close(dh);
             }
-            printf("%d: Bus %03d Device %03d: ID %04X:%04X %s %s %s\n", i, bus, port, vid, pid, mfg, prd, ser);
+            else
+            {
+#if _WIN32
+                deviceDetailsString = "<failed to open device, ensure WinUSB driver is installed>";
+#else
+                deviceDetailsString = "<failed to open device>";
+#endif
+            }
+            printf("%d: Bus %03d Device %03d: ID %04X:%04X %s\n", i, bus, port, vid, pid, deviceDetailsString.c_str());
         }
     }
 
-    if (interactive) {
-        char sbuf[32];
+    if (search_all) {
         printf("Please select device to configure [0-%d]: ", static_cast<int>(nr - 1));
         fflush(NULL);
-        fgets(sbuf, 32, stdin);
 
-        int sel = atoi(sbuf);
+        int sel;
+        std::cin >> sel;
+
+        if(!std::cin)
+        {
+            logerror("Invalid input.\n");
+            return nullptr;
+        }
+
         if( sel < 0 || sel >= nr) {
             logerror("device selection out of bound: %d\n", sel);
             return NULL;
@@ -209,18 +243,26 @@ int main(int argc, char*argv[])
     int eeprom_first_byte = -1;
     bool load_to_eeprom = false;
 
+    // Find resources directory
+    std::string app_install_dir = AppPaths::getExecutableDir();
+    std::string stage1_loader = app_install_dir + AppPaths::PATH_SEP + ".." + AppPaths::PATH_SEP + "share" + AppPaths::PATH_SEP + "fxload" + AppPaths::PATH_SEP + "Vend_Ax.hex";
+
     // List of CLI options
     app.add_flag("-v,--verbose", verbose, "show verbose message");
     app.add_option("-I,--ihex-path", ihex_path, "Hex file to program")
-        ->required();
-    auto type_opt = app.add_option("-t,--type", type, "Select device type (from AN21|FX|FX2|FX2LP)")
+        ->required()
+        ->check(CLI::ExistingFile);
+    app.add_option("-t,--type", type, "Select device type (from AN21|FX|FX2|FX2LP)")
         ->required()
         ->transform(CLI::CheckedTransformer(DeviceTypeNames, CLI::ignore_case));
     app.add_option("-D,--device", device_spec_string, "Select device by vid:pid(@index) or bus.port(@index).  If not provided, all discovered USB devices will be displayed as options.");
     auto eeprom_first_byte_opt = app.add_option("-c,--eeprom-first-byte", eeprom_first_byte, "Value programmed to first byte of EEPROM to set chip behavior.  e.g. for FX2LP this should be 0xC0 or 0xC2")
         ->check(CLI::Range(std::numeric_limits<uint8_t>::min(), std::numeric_limits<uint8_t>::max()));
-    app.add_flag("-e, --eeprom", load_to_eeprom, "Load the hex file to EEPROM via a 1st stage loader instead of directly to RAM")
-        ->needs(eeprom_first_byte_opt)->needs(type_opt);
+    auto eeprom_opt = app.add_flag("-e, --eeprom", load_to_eeprom, "Load the hex file to EEPROM via a 1st stage loader instead of directly to RAM")
+        ->needs(eeprom_first_byte_opt);
+    app.add_option("-s,--stage1", stage1_loader, "Path to the stage 1 loader file to use when flashing EEPROM.  Default: " + stage1_loader)
+        ->needs(eeprom_opt)
+        ->check(CLI::ExistingFile);
 
     CLI11_PARSE(app, argc, argv);
 
@@ -238,7 +280,7 @@ int main(int argc, char*argv[])
     libusb_device_handle *device;
     int status;
 
-    device = get_usb_device(&spec);
+    device = get_usb_device(device_spec_string.empty() ? nullptr : &spec);
 
     if (device == NULL) {
         logerror("No device to configure\n");
@@ -253,7 +295,7 @@ int main(int argc, char*argv[])
         /* first stage:  put loader into internal memory */
         if (verbose)
             logerror("1st stage:  load 2nd stage loader\n");
-        status = ezusb_load_ram (device, "Vend_Ax.hex", type, 0);
+        status = ezusb_load_ram (device, stage1_loader.c_str(), type, 0);
         if (status != 0)
             return status;
 
