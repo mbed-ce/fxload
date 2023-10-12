@@ -21,6 +21,23 @@
  */
 
 #include <libusb.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// If supported, define an attribute to mark functions as doing printf formatting
+#ifndef _MSC_VER
+#define PRINTF_FORMAT_ATTRIBUTE  __attribute__ ((format (printf, 1, 2)))
+#else
+#define PRINTF_FORMAT_ATTRIBUTE
+#endif
+
+// Utility function to print to stderr
+void logerror(const char *format, ...) PRINTF_FORMAT_ATTRIBUTE;
+
 
 /*
  * Enum to manage various EZ-USB chip types.
@@ -60,7 +77,7 @@ extern int ezusb_load_eeprom (
 
 
 /* boolean flag, says whether to write extra messages to stderr */
-extern int verbose;
+extern bool verbose;
 
 
 #define USB_DIR_OUT                     0               /* to device */
@@ -85,4 +102,9 @@ extern int verbose;
  *  location without need of spec file for install.
  *
  */
+
+#ifdef __cplusplus
+};
+#endif
+
 #endif

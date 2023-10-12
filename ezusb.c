@@ -32,8 +32,14 @@
 
 const char *ezusb_name[] = { "NONE", "AN21", "FX", "FX2", "FX2LP" };
 
-extern void logerror(const char *format, ...)
-   __attribute__ ((format (printf, 1, 2)));
+void logerror(const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+}
 
 /*
  * This file contains functions for downloading firmware into Cypress
@@ -54,7 +60,7 @@ extern void logerror(const char *format, ...)
  * The Cypress FX parts are largely compatible with the Anchorhip ones.
  */
 
-int verbose;
+bool verbose;
 
 /*
  * return true iff [addr,addr+len) includes external RAM
@@ -94,6 +100,25 @@ static int fx2_is_external (unsigned short addr, size_t len)
 	return 1;
 }
 
+/*
+ * return true iff [addr,addr+len) includes external RAM
+ * for Cypress EZ-USB FX2LP
+ */
+static int fx2lp_is_external (unsigned short addr, size_t len)
+{
+    /* 1st 16KB for data/code, 0x0000-0x3fff */
+    if (addr <= 0x3fff)
+	return ((addr + len) > 0x4000);
+
+    /* and 512 for data, 0xe000-0xe1ff */
+    else if (addr >= 0xe000 && addr <= 0xe1ff)
+	return ((addr + len) > 0xe200);
+
+    /* otherwise, it's certainly external */
+    else
+	return 1;
+}
+
 /*****************************************************************************/
 
 
@@ -108,7 +133,7 @@ static inline int ctrl_msg (
     unsigned short			value,
     unsigned short			index,
     unsigned char			*data,
-    size_t				length
+    uint16_t				length
 ) {
 
     return libusb_control_transfer(device, 
@@ -144,7 +169,7 @@ static int ezusb_read (
     unsigned char			opcode,
     unsigned short			addr,
     unsigned char			*data,
-    size_t				len
+    uint16_t				len
 ) {
     int					status;
 
@@ -172,7 +197,7 @@ static int ezusb_write (
     unsigned char			opcode,
     unsigned short			addr,
     const unsigned char			*data,
-    size_t				len
+    uint16_t				len
 ) {
     int					status;
 
@@ -254,12 +279,12 @@ int parse_ihex (
     void	*context,
     int		(*is_external)(unsigned short addr, size_t len),
     int 	(*poke) (void *context, unsigned short addr, int external,
-		      const unsigned char *data, size_t len)
+		      const unsigned char *data, uint16_t len)
 )
 {
     unsigned char	data [1023];
     unsigned short	data_addr = 0;
-    size_t		data_len = 0;
+    uint16_t		data_len = 0;
     int			rc;
     int			first_line = 1;
     int			external = 0;
@@ -276,8 +301,9 @@ int parse_ihex (
      */
     for (;;) {
 	char 		buf [512], *cp;
-	char		tmp, type;
-	size_t		len;
+	char		tmp;
+    unsigned long type;
+	uint16_t		len;
 	unsigned	idx, off;
 
 	cp = fgets(buf, sizeof buf, image);
@@ -306,7 +332,7 @@ int parse_ihex (
 	/* Read the length field (up to 16 bytes) */
 	tmp = buf[3];
 	buf[3] = 0;
-	len = strtoul(buf+1, 0, 16);
+	len = (uint16_t)strtoul(buf+1, 0, 16);
 	buf[3] = tmp;
 
 	/* Read the target offset (address up to 64KB) */
@@ -367,7 +393,7 @@ int parse_ihex (
 	/* append to saved data, flush later */
 	for (idx = 0, cp = buf+9 ;  idx < len ;  idx += 1, cp += 2) {
 	    tmp = cp[2];
-	    cp[2] = 0;
+	    cp[2] = '\0';
 	    data [data_len + idx] = strtoul(cp, 0, 16);
 	    cp[2] = tmp;
 	}
@@ -403,7 +429,7 @@ typedef enum {
 struct ram_poke_context {
     libusb_device_handle	*device;
     ram_mode	mode;
-    unsigned	total, count;
+    size_t	total, count;
 };
 
 # define RETRY_LIMIT 5
@@ -413,7 +439,7 @@ static int ram_poke (
     unsigned short	addr,
     int			external,
     const unsigned char	*data,
-    size_t		len
+    uint16_t		len
 ) {
     struct ram_poke_context	*ctx = context;
     int			rc;
@@ -459,7 +485,7 @@ static int ram_poke (
     while ((rc = ezusb_write (ctx->device,
 		    external ? "write external" : "write on-chip",
 		    external ? RW_MEMORY : RW_INTERNAL,
-		    addr, data, len)) < 0
+		    addr, data, (uint16_t)len)) < 0
 		&& retry < RETRY_LIMIT) {
 	  retry += 1;
     }
@@ -496,12 +522,17 @@ int ezusb_load_ram (libusb_device_handle *device, const char *path, ezusb_chip_t
 	logerror("open RAM hexfile image %s\n", path);
 
     /* EZ-USB original/FX and FX2 devices differ, apart from the 8051 core */
-    if (type == FX2 || type == FX2LP) {
-	cpucs_addr = 0xe600;
-	is_external = fx2_is_external;
+    if(type == FX2LP)
+    {
+        cpucs_addr = 0xe600;
+	    is_external = fx2lp_is_external;
+    }
+    else if (type == FX2) {
+	    cpucs_addr = 0xe600;
+	    is_external = fx2_is_external;
     } else {
-	cpucs_addr = 0x7f92;
-	is_external = fx_is_external;
+	    cpucs_addr = 0x7f92;
+	    is_external = fx_is_external;
     }
 
     /* use only first stage loader? */
@@ -576,7 +607,7 @@ static int eeprom_poke (
     unsigned short	addr,
     int			external,
     const unsigned char	*data,
-    size_t		len
+    uint16_t		len
 ) {
     struct eeprom_poke_context	*ctx = context;
     int			rc;
@@ -600,9 +631,9 @@ static int eeprom_poke (
 
     /* write header */
     header [0] = len >> 8;
-    header [1] = len;
+    header [1] = len & 0xFF;
     header [2] = addr >> 8;
-    header [3] = addr;
+    header [3] = addr & 0xFF;
     if (ctx->last)
 	header [0] |= 0x80;
     if ((rc = ezusb_write (ctx->device, "write EEPROM segment header",
@@ -656,10 +687,11 @@ int ezusb_load_eeprom (libusb_device_handle *dev, const char *path, ezusb_chip_t
 
     /* EZ-USB family devices differ, apart from the 8051 core */
     switch (type) {
+    case FX2LP:
     case FX2:
 	first_byte = 0xC2;
 	cpucs_addr = 0xe600;
-	is_external = fx2_is_external;
+	is_external = type == FX2 ? fx2_is_external : fx2lp_is_external;
 	ctx.ee_addr = 8;
 	config &= 0x4f;
 	logerror(
