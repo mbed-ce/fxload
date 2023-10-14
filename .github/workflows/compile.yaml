@@ -1,0 +1,73 @@
+name: Compile fxload
+on: push
+jobs:
+  build-windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install libusb
+        run: |
+          C:\vcpkg\vcpkg.exe install libusb:x64-windows
+      - name: Compile project
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_PREFIX_PATH=C:\vcpkg\installed\x64-windows
+          cmake --build .
+
+  build-windows-mingw:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install libusb and ucrt64 GCC compiler
+        shell: msys2bash.cmd
+        run: |
+          pacman -S mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
+      - name: Compile project
+        shell: msys2bash.cmd
+        run: |
+          mkdir build
+          cd build
+          cmake .. -GNinja -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
+          ninja
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install libusb
+        run: |
+          brew install libusb ninja
+      - name: Compile project
+        run: |
+          mkdir build
+          cd build
+          cmake .. -GNinja
+          ninja
+
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install libusb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libusb-1.0-0-dev ninja-build
+      - name: Compile project
+        run: |
+          mkdir build
+          cd build
+          cmake .. -GNinja
+          ninja
