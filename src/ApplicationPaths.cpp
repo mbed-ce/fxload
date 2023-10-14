@@ -41,6 +41,8 @@
     #include <limits.h>
     #include <libgen.h>
     #include <unistd.h>
+    #include <stdexcept>
+    #include <cstring>
 
     #if defined(__sun)
         #define PROC_SELF_EXE "/proc/self/path/a.out"
@@ -76,19 +78,12 @@ std::string getExecutableDir() {
 
 std::string getExecutablePath() {
    char rawPathName[PATH_MAX];
-   (void)realpath(PROC_SELF_EXE, rawPathName);
+   if(realpath(PROC_SELF_EXE, rawPathName) == nullptr)
+   {
+        throw std::runtime_error("realpath() failed!");
+   }
    return std::string(rawPathName);
 }
-
-std::string getExecutableDir() {
-    std::string executablePath = getExecutablePath();
-    char *executablePathStr = new char[executablePath.length() + 1];
-    strcpy(executablePathStr, executablePath.c_str());
-    char* executableDir = dirname(executablePathStr);
-    delete [] executablePathStr;
-    return std::string(executableDir);
-}
-
 #endif
 
 #ifdef __APPLE__
@@ -102,14 +97,24 @@ std::string getExecutablePath() {
     }
     return  std::string(realPathName);
 }
+#endif
 
+#if defined(__APPLE__) || defined(__linux__)
 std::string getExecutableDir() {
     std::string executablePath = getExecutablePath();
+
+    // Create a new char* in memory containing the executable path
     char *executablePathStr = new char[executablePath.length() + 1];
     strcpy(executablePathStr, executablePath.c_str());
-    char* executableDir = dirname(executablePathStr);
+
+    // Run dirname on executablePathStr (dirname modifies the memory in place)
+    char* executableDirStr = dirname(executablePathStr);
+
+    // Copy the path into a new string, then delete the mem we allocated
+    std::string executableDir(executableDirStr);
     delete [] executablePathStr;
-    return std::string(executableDir);
+
+    return executableDir;
 }
 #endif
 
