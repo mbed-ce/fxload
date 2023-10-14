@@ -47,7 +47,7 @@ elseif(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUA
 	string(APPEND CMAKE_C_FLAGS " -Wall")
 
 	if(USE_WERROR)
-		string(APPEND CMAKE_CXX_FLAGS " -Werror")
+		string(APPEND CMAKE_C_FLAGS " -Werror")
 	endif()
 
 else()
@@ -104,6 +104,10 @@ set(CMAKE_CXX_EXTENSIONS TRUE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(USB1 REQUIRED)
+
+if(NOT EXISTS CLI11/LICENSE)
+	message(FATAL_ERROR "CLI11 submodule missing, please run 'git submodule update --init'")
+endif()
 
 # CLI11 is a header only library
 add_library(CLI11 INTERFACE)

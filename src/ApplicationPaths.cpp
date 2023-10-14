@@ -76,8 +76,8 @@ std::string getExecutableDir() {
 
 std::string getExecutablePath() {
    char rawPathName[PATH_MAX];
-   realpath(PROC_SELF_EXE, rawPathName);
-   return  std::string(rawPathName);
+   (void)realpath(PROC_SELF_EXE, rawPathName);
+   return std::string(rawPathName);
 }
 
 std::string getExecutableDir() {
@@ -92,25 +92,25 @@ std::string getExecutableDir() {
 #endif
 
 #ifdef __APPLE__
-    std::string getExecutablePath() {
-        char rawPathName[PATH_MAX];
-        char realPathName[PATH_MAX];
-        uint32_t rawPathSize = (uint32_t)sizeof(rawPathName);
+std::string getExecutablePath() {
+    char rawPathName[PATH_MAX];
+    char realPathName[PATH_MAX];
+    uint32_t rawPathSize = (uint32_t)sizeof(rawPathName);
 
-        if(!_NSGetExecutablePath(rawPathName, &rawPathSize)) {
-            realpath(rawPathName, realPathName);
-        }
-        return  std::string(realPathName);
+    if(!_NSGetExecutablePath(rawPathName, &rawPathSize)) {
+        realpath(rawPathName, realPathName);
     }
+    return  std::string(realPathName);
+}
 
-    std::string getExecutableDir() {
-        std::string executablePath = getExecutablePath();
-        char *executablePathStr = new char[executablePath.length() + 1];
-        strcpy(executablePathStr, executablePath.c_str());
-        char* executableDir = dirname(executablePathStr);
-        delete [] executablePathStr;
-        return std::string(executableDir);
-    }
+std::string getExecutableDir() {
+    std::string executablePath = getExecutablePath();
+    char *executablePathStr = new char[executablePath.length() + 1];
+    strcpy(executablePathStr, executablePath.c_str());
+    char* executableDir = dirname(executablePathStr);
+    delete [] executablePathStr;
+    return std::string(executableDir);
+}
 #endif
 
 }

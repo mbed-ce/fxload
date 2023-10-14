@@ -395,7 +395,7 @@ int parse_ihex (
 	for (idx = 0, cp = buf+9 ;  idx < len ;  idx += 1, cp += 2) {
 	    tmp = cp[2];
 	    cp[2] = '\0';
-	    data [data_len + idx] = strtoul(cp, 0, 16);
+	    data [data_len + idx] = (uint8_t)strtoul(cp, 0, 16);
 	    cp[2] = tmp;
 	}
 	data_len += len;
@@ -582,7 +582,7 @@ int ezusb_load_ram (libusb_device_handle *device, const char *path, ezusb_chip_t
     }
 
     if (verbose)
-	logerror("... WROTE: %d bytes, %d segments, avg %d\n",
+	logerror("... WROTE: %zu bytes, %zu segments, avg %zu\n",
 	    ctx.total, ctx.count, ctx.total / ctx.count);
 	
     /* now reset the CPU so it runs what we just downloaded */
