@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "libusb.h"
 
@@ -60,7 +61,7 @@ void logerror(const char *format, ...)
  * The Cypress FX parts are largely compatible with the Anchorhip ones.
  */
 
-bool verbose;
+int verbose;
 
 /*
  * return true iff [addr,addr+len) includes external RAM
@@ -282,7 +283,7 @@ int parse_ihex (
 		      const unsigned char *data, uint16_t len)
 )
 {
-    unsigned char	data [1023];
+    uint8_t	    data [1023];
     unsigned short	data_addr = 0;
     uint16_t		data_len = 0;
     int			rc;
@@ -361,7 +362,7 @@ int parse_ihex (
 	}
 
 	if (type != 0) {
-	    logerror("unsupported record type: %u\n", type);
+	    logerror("unsupported record type: %lu\n", type);
 	    return -3;
 	}
 

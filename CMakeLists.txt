@@ -12,12 +12,58 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 	set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Type of build.  Controls debugging information and optimizations." FORCE)
 endif()
 
+option(USE_WERROR "If set to true, convert compiler warnings into compiler errors.  Mainly intended for CI." FALSE)
+
 # compile flags
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+
+	set(CMAKE_C_FLAGS_RELEASE "-O3")
+	set(CMAKE_C_FLAGS_DEBUG "-g3 -O0")
+	string(APPEND CMAKE_C_FLAGS " -Wall")
+	if(USE_WERROR)
+		string(APPEND CMAKE_C_FLAGS " -Werror")
+	endif()
+
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+
+	set(CMAKE_C_FLAGS_RELEASE "/O2 /MD")
+	set(CMAKE_C_FLAGS_DEBUG "/MDd /Zi /Ob0 /Od /RTC1")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3") # Use reasonable warning flags
+
+	# Suppress warning about zero sized arrays used by libusb
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4200")
+
+	if(USE_WERROR)
+		string(APPEND CMAKE_C_FLAGS " /WX")
+	endif()
+
+	# disable verbose security warnings
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)
+
+elseif(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
+
+	set(CMAKE_C_FLAGS_RELEASE "-O3")
+	set(CMAKE_C_FLAGS_DEBUG "-g3 -O0")
+	string(APPEND CMAKE_C_FLAGS " -Wall")
+
+	if(USE_WERROR)
+		string(APPEND CMAKE_CXX_FLAGS " -Werror")
+	endif()
+
+else()
+
+	message(WARNING "Unknown compiler, don't know how to set CXXFLAGS")
+endif()
+
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 	set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 	set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+	string(APPEND CMAKE_CXX_FLAGS " -Wall")
+	if(USE_WERROR)
+		string(APPEND CMAKE_CXX_FLAGS " -Werror")
+	endif()
 		
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
@@ -28,20 +74,28 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	# Suppress warning about zero sized arrays used by libusb
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4200")
 
-	# disable verbose security warnings
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)
+	if(USE_WERROR)
+		string(APPEND CMAKE_CXX_FLAGS " /WX")
+	endif()
 
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
 
 	set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 	set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+	if(USE_WERROR)
+		string(APPEND CMAKE_CXX_FLAGS " -Werror")
+	endif()
+
 else()
 
 	message(WARNING "Unknown compiler, don't know how to set CXXFLAGS")
 endif()
 
-# use C++17, with extensions
+# use C99 and C++17, with extensions
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_EXTENSIONS TRUE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS TRUE)
 

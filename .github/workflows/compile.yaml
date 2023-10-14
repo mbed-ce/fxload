@@ -15,7 +15,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH=C:\vcpkg\installed\x64-windows
+          cmake .. -DUSE_WERROR=TRUE -DCMAKE_PREFIX_PATH=C:\vcpkg\installed\x64-windows
           cmake --build .
 
   build-windows-mingw:
@@ -26,7 +26,7 @@ jobs:
         with:
           submodules: true
       - name: Install libusb and ucrt64 GCC compiler
-        shell: msys2bash.cmd
+        shell: C:\shells\msys2bash.cmd
         run: |
           pacman -S mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
       - name: Compile project
@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
+          cmake .. -GNinja -DUSE_WERROR=TRUE -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
           ninja
 
   build-mac:
@@ -51,7 +51,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja
+          cmake .. -GNinja -DUSE_WERROR=TRUE
           ninja
 
   build-ubuntu:
@@ -69,5 +69,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja
+          cmake .. -GNinja -DUSE_WERROR=TRUE
           ninja

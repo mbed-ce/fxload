@@ -75,7 +75,9 @@ libusb_device_handle *get_usb_device(struct device_spec *wanted) {
     libusb_device_handle *dev_h = NULL;
 
     libusb_init(NULL);
-    libusb_set_debug(NULL, 0);
+
+    // If in double-verbose mode or above, set libusb to debug log mode.
+    libusb_set_option(nullptr, LIBUSB_OPTION_LOG_LEVEL, verbose >= 2 ? LIBUSB_LOG_LEVEL_DEBUG : LIBUSB_LOG_LEVEL_WARNING);
 
     libusb_device *found = NULL;
     int nr_found = 0;
@@ -248,7 +250,7 @@ int main(int argc, char*argv[])
     std::string stage1_loader = app_install_dir + AppPaths::PATH_SEP + ".." + AppPaths::PATH_SEP + "share" + AppPaths::PATH_SEP + "fxload" + AppPaths::PATH_SEP + "Vend_Ax.hex";
 
     // List of CLI options
-    app.add_flag("-v,--verbose", verbose, "show verbose message");
+    app.add_flag("-v,--verbose", verbose, "Verbose mode.  May be supplied up to 3 times for more verbosity."); // note: CLI11 will count the occurrences of a flag when you pass an integer variable to add_flag()
     app.add_option("-I,--ihex-path", ihex_path, "Hex file to program")
         ->required()
         ->check(CLI::ExistingFile);

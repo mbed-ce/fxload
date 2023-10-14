@@ -76,8 +76,8 @@ extern int ezusb_load_eeprom (
 	);
 
 
-/* boolean flag, says whether to write extra messages to stderr */
-extern bool verbose;
+/* Verbosity level from 0 (least verbose) to 3 (most verbose) */
+extern int verbose;
 
 
 #define USB_DIR_OUT                     0               /* to device */
