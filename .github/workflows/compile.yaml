@@ -26,11 +26,11 @@ jobs:
         with:
           submodules: true
       - name: Install libusb and ucrt64 GCC compiler
-        shell: C:\shells\msys2bash.cmd
+        shell: bash
         run: |
           pacman -S mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
       - name: Compile project
-        shell: msys2bash.cmd
+        shell: bash
         run: |
           mkdir build
           cd build

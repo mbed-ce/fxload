@@ -105,7 +105,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(USB1 REQUIRED)
 
-if(NOT EXISTS CLI11/LICENSE)
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}}/CLI11/LICENSE")
 	message(FATAL_ERROR "CLI11 submodule missing, please run 'git submodule update --init'")
 endif()
 
