@@ -26,12 +26,12 @@ jobs:
         with:
           submodules: true
       - name: Install libusb and ucrt64 GCC compiler
-        shell: bash
         run: |
+          $env:PATH = "C:\msys64\usr\bin;$env:PATH"
           pacman -S mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
       - name: Compile project
-        shell: bash
         run: |
+          $env:PATH = "C:\msys64\usr\bin;C:\msys64\ucrt64\usr\bin;$env:PATH"
           mkdir build
           cd build
           cmake .. -GNinja -DUSE_WERROR=TRUE -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
