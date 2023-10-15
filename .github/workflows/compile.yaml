@@ -31,7 +31,7 @@ jobs:
           pacman --noconfirm -Sy mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
       - name: Compile project
         run: |
-          $env:PATH = "C:\msys64\usr\bin;C:\msys64\ucrt64\usr\bin;$env:PATH"
+          $env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;$env:PATH"
           mkdir build
           cd build
           cmake .. -GNinja -DUSE_WERROR=TRUE -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
