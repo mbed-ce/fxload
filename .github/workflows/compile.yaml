@@ -28,7 +28,7 @@ jobs:
       - name: Install libusb and ucrt64 GCC compiler
         run: |
           $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-          pacman -S mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
+          pacman --noconfirm -Sy mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-gcc ninja
       - name: Compile project
         run: |
           $env:PATH = "C:\msys64\usr\bin;C:\msys64\ucrt64\usr\bin;$env:PATH"
