@@ -34,7 +34,7 @@ jobs:
           $env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;$env:PATH"
           mkdir build
           cd build
-          cmake .. -GNinja -DUSE_WERROR=TRUE -DCMAKE_C_COMPILER=mingw-w64-ucrt-x86_64-gcc -DCMAKE_CXX_COMPILER=mingw-w64-ucrt-x86_64-g++
+          cmake .. -GNinja -DUSE_WERROR=TRUE -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-gcc
           ninja
 
   build-mac:
