@@ -29,10 +29,14 @@ extern "C"
 #endif
 
 // If supported, define an attribute to mark functions as doing printf formatting
-#ifndef _MSC_VER
-#define PRINTF_FORMAT_ATTRIBUTE  __attribute__ ((format (printf, 1, 2)))
-#else
+#ifdef __MINGW32__
+// On mingw we need to specify that we're using gnu printf provided by ucrt
+#define PRINTF_FORMAT_ATTRIBUTE  __attribute__ ((format (gnu_printf, 1, 2)))
+#elif defined(_MSC_VER)
+// No corresponding attribute for MSVC
 #define PRINTF_FORMAT_ATTRIBUTE
+#else
+#define PRINTF_FORMAT_ATTRIBUTE  __attribute__ ((format (printf, 1, 2)))
 #endif
 
 // Utility function to print to stderr

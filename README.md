@@ -6,13 +6,19 @@ FXLoad is a tool for flashing firmware to the Anchor Chips/Cypress/Infineon EZ-U
 
 FXLoad supports the following chips (in order of most to least recent):
 - [Cypress/Infineon FX2LP](https://www.infineon.com/cms/en/product/universal-serial-bus/usb-2.0-peripheral-controllers/ez-usb-fx2lp-fx2g2-usb-2.0-peripheral-controller/) (CY7C68013A) (`-t FX2LP`)
-- [Cypress/Infineon FX2 (CY7C68013) (`-t FX2`)
+- Cypress/Infineon FX2 (CY7C68013) (`-t FX2`)
 - Cypress/Infineon FX (CY7C64613) (`-t FX`)
 - Anchor Chips AN21 (AN2131SC) (`-t AN21`)
 
 More info about the EZ-USB series of micros can be found [here](http://www.linux-usb.org/ezusb/).
 
 ## License & History
+
+The last original version of fxload was published in 2008 by David Brownell at http://linux-hotplug.sourceforge.net.  This version is Linux only as it requires 
+
+In 2010, Wolfgang Wieser created some patches to make assigning VIDs and PIDs easier [here](https://www.triplespark.net/elec/periph/USB-FX2/eeprom/) (these currently are not merged into this version)
+
+
 
 ## Code Installation
 
