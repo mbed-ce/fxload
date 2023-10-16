@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(VERSION 3.8)
 
-project(fxload VERSION 2.1)
+project(fxload VERSION 2.0)
 
 # set compile flags and options
 # ----------------------------------------------------------
