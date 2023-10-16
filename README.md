@@ -16,7 +16,7 @@ More info about the EZ-USB series of micros can be found [here](http://www.linux
 
 FXLoad is licensed under the GNU General Public License, Version 2.
 
-The last original version of fxload was published in 2008 by David Brownell at http://linux-hotplug.sourceforge.net.  This version is Linux only as it uses Linux-specific ioctls to talk to the device instead of libusb.
+The original version of fxload was published from 2001-2008 by David Brownell and others at http://linux-hotplug.sourceforge.net.  This version is Linux only as it uses Linux-specific ioctls to talk to the device instead of libusb.
 
 In 2010, Wolfgang Wieser created some patches to make assigning VIDs and PIDs easier [here](https://www.triplespark.net/elec/periph/USB-FX2/eeprom/) (these currently are not merged into this version).
 
@@ -125,7 +125,7 @@ First, add your user to the "plugdev" group:
 ```
 sudo usermod -G plugdev $(whoami)
 ```
-We will use ths group to control access to USB devices.  Next, sign out and back in again to make the change effective.
+We will use ths group to control access to USB devices.  After running this, sign out and back in again to make the change effective.
 
 Second, run `sudo vim /etc/udev/rules.d/99-ezusb.rules` to create a new rules file with the following content:
 ```

@@ -182,9 +182,9 @@ libusb_device_handle *get_usb_device(struct device_spec *wanted) {
 
 int
 parse_device_path(const std::string & device_path, struct device_spec *spec) {
-    std::string::size_type colonIdx = device_path.find(":");
-    std::string::size_type dotIdx = device_path.find(".");
-    std::string::size_type atIndex = device_path.find("@");
+    std::string::size_type colonIdx = device_path.find(':');
+    std::string::size_type dotIdx = device_path.find('.');
+    std::string::size_type atIndex = device_path.find('@');
     if (colonIdx != std::string::npos) {
 
         // Always expect 4 hex digits in each part
@@ -236,7 +236,7 @@ const std::map<std::string, ezusb_chip_t> DeviceTypeNames
 
 int main(int argc, char*argv[])
 {
-    CLI::App app{std::string(FXLOAD_VERSION_STR) + "\nA utility to load the Cypress FX2 family of microcontrollers over USB."};
+    CLI::App app{std::string(FXLOAD_VERSION_STR) + "\nA utility to load the EZ-USB family of microcontrollers over USB."};
 
     // Variables written to by CLI options
     std::string ihex_path;
@@ -259,7 +259,7 @@ int main(int argc, char*argv[])
         ->transform(CLI::CheckedTransformer(DeviceTypeNames, CLI::ignore_case));
     app.add_option("-D,--device", device_spec_string, "Select device by vid:pid(@index) or bus.port(@index).  If not provided, all discovered USB devices will be displayed as options.");
     auto eeprom_first_byte_opt = app.add_option("-c,--eeprom-first-byte", eeprom_first_byte, "Value programmed to first byte of EEPROM to set chip behavior.  e.g. for FX2LP this should be 0xC0 or 0xC2")
-        ->check(CLI::Range(std::numeric_limits<uint8_t>::min(), std::numeric_limits<uint8_t>::max()));
+        ->check(CLI::Range(static_cast<uint16_t>(std::numeric_limits<uint8_t>::min()), static_cast<uint16_t>(std::numeric_limits<uint8_t>::max())));
     auto eeprom_opt = app.add_flag("-e, --eeprom", load_to_eeprom, "Load the hex file to EEPROM via a 1st stage loader instead of directly to RAM")
         ->needs(eeprom_first_byte_opt);
     app.add_option("-s,--stage1", stage1_loader, "Path to the stage 1 loader file to use when flashing EEPROM.  Default: " + stage1_loader)
@@ -317,46 +317,7 @@ int main(int argc, char*argv[])
 
     libusb_close(device);
 
+    printf("Done.\n");
+
     exit(0);
 }
-
-
-/*
- * $Log: main.c,v $
- * Revision 1.2  2007/03/20 14:31:50  cfavi
- * *** empty log message ***
- *
- * Revision 1.1  2007/03/19 20:46:30  cfavi
- * fxload ported to use libusb
- *
- * Revision 1.8  2005/01/11 03:58:02  dbrownell
- * From Dirk Jagdmann <doj@cubic.org>:  optionally output messages to
- * syslog instead of stderr.
- *
- * Revision 1.7  2002/04/12 00:28:22  dbrownell
- * support "-t an21" to program EEPROMs for those microcontrollers
- *
- * Revision 1.6  2002/04/02 05:26:15  dbrownell
- * version display now noiseless (-V);
- * '-?' (usage info) convention now explicit
- *
- * Revision 1.5  2002/02/26 20:10:28  dbrownell
- * - "-s loader" option for 2nd stage loader
- * - "-c byte" option to write EEPROM with 2nd stage
- * - "-V" option to dump version code
- *
- * Revision 1.4  2002/01/17 14:19:28  dbrownell
- * fix warnings
- *
- * Revision 1.3  2001/12/27 17:54:04  dbrownell
- * forgot an important character :)
- *
- * Revision 1.2  2001/12/27 17:43:29  dbrownell
- * fail on firmware download errors; add "-v" flag
- *
- * Revision 1.1  2001/06/12 00:00:50  stevewilliams
- *  Added the fxload program.
- *  Rework root makefile and hotplug.spec to install in prefix
- *  location without need of spec file for install.
- *
- */

@@ -117,3 +117,23 @@ target_include_directories(CLI11 INTERFACE CLI11/include)
 # ----------------------------------------------------------
 add_subdirectory(src)
 add_subdirectory(resources)
+
+# Set up packaging (on windows)
+# ----------------------------------------------------------
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+	# General CPack options
+	set(CPACK_PACKAGE_NAME "FXLoad")
+	set(CPACK_PACKAGE_VENDOR "Mbed CE")
+	set(CPACK_PACKAGE_DESCRIPTION "FXLoad is a tool for flashing firmware to the EZ-USB series of USB interface microcontrollers.")
+	set(CPACK_PACKAGE_VERSION ${fxload_VERSION})
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY "FXLoad")
+	set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/mbed-ce/fxload")
+	set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/copying.txt)
+
+	# NSIS specific options
+	set(CPACK_GENERATOR NSIS)
+	# Make sure the installer provides an option to add fxload to the path
+	set(CPACK_NSIS_MODIFY_PATH TRUE)
+
+	include(CPack)
+endif()

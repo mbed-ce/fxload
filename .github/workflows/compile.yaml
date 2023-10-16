@@ -13,10 +13,19 @@ jobs:
           C:\vcpkg\vcpkg.exe install libusb:x64-windows
       - name: Compile project
         run: |
+          $env:PATH = "C:\vcpkg\installed\x64-windows\bin;$env:PATH"
           mkdir build
           cd build
           cmake .. -DUSE_WERROR=TRUE -DCMAKE_PREFIX_PATH=C:\vcpkg\installed\x64-windows
           cmake --build .
+          cmake --build . -t package
+      - uses: actions/upload-artifact@v3
+        if: ${{success()}}
+        with:
+          name: Windows Installer
+          if-no-files-found: error
+          path: |
+            build/FXLoad-*.exe
 
   build-windows-mingw:
     runs-on: windows-latest
