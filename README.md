@@ -151,7 +151,7 @@ Now, you should be able to work with EZ-USB micros without root access!  Just re
 ### Specifying the Device To Load
 This version of fxload allows you to specify the device to connect to in three different ways.
 
-1. You may not specify the `--device` argument at all, in which case fxload will present a menu of all the available USB devices connected to the machine.  You can select the one to load from the menu.  This mode is ideal for command line usage.
+1. You may not specify the `--device` argument at all, in which case fxload will present a menu of all the available USB devices connected to the machine.  You can select the one to load from the menu.  This mode is ideal for interactive usage.
 2. You may specify `--device <vid>:<pid>` to select a device by its vendor ID and hardware ID (in hexadecimal).  For example, to flash an unconfigured FX2LP, you would pass `--device 04b4:8613`.  By default, this will select the first such device found, but you can change that by adding `@N` after the vid and pid to use the Nth device found (where N is the 0-indexed index of the device to use).
 3. You may specify `--device <bus>.<port>` to select a device by its bus and device number, specified as decimal numbers.  You can get the bus and device numbers from `lsusb` on Linux, though I'm not aware of a utility to list them on Linux.
 
