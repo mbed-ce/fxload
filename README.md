@@ -148,4 +148,45 @@ Now, you should be able to work with EZ-USB micros without root access!  Just re
 
 ## Using FXLoad
 
-A Win32 + libusb-1.0 API port of fxload, programming tool for Cypress EZ-USB series.
+### Specifying the Device To Load
+This version of fxload allows you to specify the device to connect to in three different ways.
+
+1. You may not specify the `--device` argument at all, in which case fxload will present a menu of all the available USB devices connected to the machine.  You can select the one to load from the menu.  This mode is ideal for command line usage.
+2. You may specify `--device <vid>:<pid>` to select a device by its vendor ID and hardware ID (in hexadecimal).  For example, to flash an unconfigured FX2LP, you would pass `--device 04b4:8613`.  By default, this will select the first such device found, but you can change that by adding `@N` after the vid and pid to use the Nth device found (where N is the 0-indexed index of the device to use).
+3. You may specify `--device <bus>.<port>` to select a device by its bus and device number, specified as decimal numbers.  You can get the bus and device numbers from `lsusb` on Linux, though I'm not aware of a utility to list them on Linux.
+
+### Loading a Hex File to RAM
+To just load a firmware file into RAM, use a command like:
+```sh
+$ fxload --ihex-path <path/to/firmware.hex> -t FX2LP
+``` 
+
+(the -t argument may be changed to "FX2", "FX", or "AN21" as appropriate)
+
+Sinc you are loading to RAM, this method of loading firmware will only last until the device is reset, which is useful for testing firmware builds!
+
+### Loading a Hex File to EEPROM
+
+**Warning: This process can soft-brick your device if you load invalid firmware.  See the "unbricking" section below for more details.**
+
+To load a hex file into EEPROM, use a command line:
+```sh
+$ fxload --ihex-path <path/to/firmware.hex> -t FX2LP --eeprom -c 0xC2
+```
+
+The `-c` argument gives the value for the command byte (the first byte of the device EEPROM).  The value to use here changes based on the device.  For FX2LP, 0xC2 causes the device to boot from EEPROM, and 0xC0 causes the device to load the VID, PID, and DID from EEPROM.
+
+### Loading Only VID, PID, and DID values to EEPROM
+
+Unlike loading an entire firmware file, doing this will cause the EZ-USB chip to enumerate in its default bootup state with no code, but with custom VID, PID, and DID values for your application.  For this mode, use the same command as above but change the command byte for your device to 0xC0, then pass a hex file containing the VID, PID, and DID values in the correct binary format.
+
+TODO need to create an example for how to do this...
+
+### Unbricking
+If you load firmware onto the EEPROM which does not properly boot up, your device may be soft-bricked -- you might be unable to flash firmware onto it normally.  In this situation, the easiest way to recover is to use a jumper wire to short the EEPROM's SCL or SDA pin to GND, then turn on the power.  This will force the I2C bus into the low state, preventing the EZ-USB from reading its firmware and making it boot up as an unconfigured device.  Then, remove the jumper and flash the code again.
+
+This shouldn't hurt the device because I2C is an open drain bus, where chips only write 0 to the bus lines or leave them high impedance, so nothing will be writing 1 to the bus and causing a short.
+
+Some dev boards also provide jumpers which can be used to disconnect the EEPROM from the FX2LP.  These will also work for unbricking it -- just remove them and turn on the power, then plug them back in and reflash new firmware.
+
+More info about unbricking can be found [here](https://www.triplespark.net/elec/periph/USB-FX2/eeprom/).

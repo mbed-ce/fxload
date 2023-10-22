@@ -32,39 +32,6 @@
 
 struct device_spec { int index; uint16_t vid, pid; int bus, port; };
 
-//void usage(const char *argv0) {
-//    char *p = strrchr(argv0, '/');
-//    char *q = strrchr(argv0, '\\');
-//
-//    // basename of argv0
-//    p = (p > q) ? p+1 : q+1;
-//
-//    fprintf(stderr, "Usage: %s [options] -I file [-c 0xC[02] -s loader]\n", p);
-//    fprintf(stderr,
-//            "Options:\n"
-//            "  -D <dev>   : select device by vid:pid or bus.port\n"
-//            "  -t <type>  : select type from (an21|fx|fx2|fx2lp)\n"
-//            "  -I <file>  : program hex file\n"
-//            "  -s <loader>: program stage1 loader to write a file into EEPROM\n"
-//            "  -c <byte>  : program first byte of EEPROM with either 0xC0 or 0xC2\n"
-//            "  -V         : show version\n"
-//            "  -v         : show verbose message\n");
-//    fprintf(stderr,
-//            "Examples:\n"
-//            "  // program fw.hex to the FIRST device with given vid\n"
-//            "  $ %s -d 04b4:@0 -I fw.hex\n"
-//            "\n"
-//            "  // program fw.hex to the SECOND device at given bus\n"
-//            "  $ %s -d 004.@1 -I fw.hex\n"
-//            "\n"
-//            "  // program vid:pid info to EEPROM\n"
-//            "  $ %s -I vidpid.hex -c 0xC0 -s Vend_Ax.hex\n"
-//            "\n"
-//            "  // program whole firmware to EEPROM\n"
-//            "  $ %s -I fwfile.hex -c 0xC2 -s Vend_Ax.hex\n", p, p, p, p);
-//    exit(1);
-//}
-
 /*
  * Finds the correct USB device to open based on the provided device spec.
  * If wanted is nullptr, all USB devices are printed to the console and the user
