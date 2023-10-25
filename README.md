@@ -32,10 +32,10 @@ In 2023, the Mbed CE project is now making an updated version of this library wh
 - Improved error messages (esp. for failing to open USB devices)
 - Improved device selection menu
 
-## Code Installation
+## Installing FXLoad
 
 ### Installer
-On Windows, FXLoad can be installed via the Windows installer downloadable from the Releases page. (TODO)
+On Windows, FXLoad can be installed via the Windows installer downloadable from the [Releases](https://github.com/mbed-ce/fxload/releases) page.
 
 ### Building from Source
 FXLoad can be built from source using CMake and a C/C++ compiler.  The first step is to use Git to clone the project.  Make sure to pass "--recursive" to get the submodules:
@@ -155,15 +155,21 @@ This version of fxload allows you to specify the device to connect to in three d
 2. You may specify `--device <vid>:<pid>` to select a device by its vendor ID and hardware ID (in hexadecimal).  For example, to flash an unconfigured FX2LP, you would pass `--device 04b4:8613`.  By default, this will select the first such device found, but you can change that by adding `@N` after the vid and pid to use the Nth device found (where N is the 0-indexed index of the device to use).
 3. You may specify `--device <bus>.<port>` to select a device by its bus and device number, specified as decimal numbers.  You can get the bus and device numbers from `lsusb` on Linux, though I'm not aware of a utility to list them on Linux.
 
+To list available devices, run the command
+```
+fxload list
+```
+This will list out all available USB devices on your system, so you can pick which device to use.
+
 ### Loading a Hex File to RAM
 To just load a firmware file into RAM, use a command like:
 ```sh
-$ fxload --ihex-path <path/to/firmware.hex> -t FX2LP
+$ fxload load_ram --ihex-path <path/to/firmware.hex> -t FX2LP
 ``` 
 
 (the -t argument may be changed to "FX2", "FX", or "AN21" as appropriate)
 
-Sinc you are loading to RAM, this method of loading firmware will only last until the device is reset, which is useful for testing firmware builds!
+Since you are loading to RAM, this method of loading firmware will only last until the device is reset, which is useful for testing firmware builds!
 
 ### Loading a Hex File to EEPROM
 
@@ -171,10 +177,12 @@ Sinc you are loading to RAM, this method of loading firmware will only last unti
 
 To load a hex file into EEPROM, use a command line:
 ```sh
-$ fxload --ihex-path <path/to/firmware.hex> -t FX2LP --eeprom -c 0xC2
+$ fxload load_eeprom --ihex-path <path/to/firmware.hex> -t FX2LP --control-byte 0xC2
 ```
 
-The `-c` argument gives the value for the command byte (the first byte of the device EEPROM).  The value to use here changes based on the device.  For FX2LP, 0xC2 causes the device to boot from EEPROM, and 0xC0 causes the device to load the VID, PID, and DID from EEPROM.
+The `--control-byte` argument gives the value for the command byte (the first byte of the device EEPROM).  The value to use here changes based on the device.  For FX2LP, 0xC2 causes the device to boot from EEPROM, and 0xC0 causes the device to load the VID, PID, and DID from the EEPROM.
+
+Note: You may need to reset the chip before the new firmware will load.
 
 ### Loading Only VID, PID, and DID values to EEPROM
 
