@@ -238,7 +238,6 @@ int main(int argc, char*argv[])
     std::string device_spec_string;
     ezusb_chip_t type = NONE;
     int eeprom_first_byte = -1;
-    bool load_to_eeprom = false;
     bool printVersion = false;
 
     // Find resources directory
