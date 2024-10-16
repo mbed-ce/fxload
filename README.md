@@ -123,7 +123,7 @@ For a better solution, we will need to follow a few more steps.
 
 First, add your user to the "plugdev" group:
 ```
-sudo usermod -G plugdev $(whoami)
+sudo usermod -a -G plugdev $(whoami)
 ```
 We will use ths group to control access to USB devices.  After running this, sign out and back in again to make the change effective.
 
